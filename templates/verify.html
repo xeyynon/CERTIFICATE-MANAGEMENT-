@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>Certificate Verification</title></head>
+<body>
+  <h2>🎓 Certificate Verification</h2>
+  <p><strong>Name:</strong> {{ cert[1] }}</p>
+  <p><strong>Event:</strong> {{ cert[2] }}</p>
+  <p><strong>Date Issued:</strong> {{ cert[4] }}</p>
+  <p><strong>Certificate:</strong></p>
+  <img src="{{ url_for('static', filename='certificates/' + cert[3].split('/')[-1]) }}" width="600">
+  <br><br>
+  <a href="{{ url_for('static', filename='certificates/' + cert[3].split('/')[-1]) }}" download>Download Certificate</a>
+</body>
+</html>

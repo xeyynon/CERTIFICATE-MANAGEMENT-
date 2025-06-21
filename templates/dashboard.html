@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <style>
+    #template-container {
+      position: relative;
+      width: 800px;
+      margin-top: 20px;
+    }
+
+    .draggable {
+      position: absolute;
+      padding: 5px 10px;
+      background: #fff3cd;
+      border: 1px dashed #333;
+      cursor: move;
+      font-family: sans-serif;
+    }
+
+    #controls {
+      margin-top: 20px;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎓 Certificate Management Dashboard</h2>
+
+  <!-- Always show upload form -->
+  <form action="/upload-template" method="post" enctype="multipart/form-data">
+    <p><strong>Upload Certificate Template (PNG):</strong></p>
+    <input type="file" name="template" accept=".png" required>
+    <button type="submit">Upload</button>
+  </form>
+
+  {% if template_exists %}
+    <hr>
+    <p><strong>Template Loaded:</strong> {{ template_name }}.png</p>
+
+    <div id="template-container">
+      <img src="/static/latest_template.png" width="800">
+      <div class="draggable" id="name" style="left: 100px; top: 100px;">[Name]</div>
+      <div class="draggable" id="event" style="left: 100px; top: 160px;">[Event]</div>
+      <div class="draggable" id="date" style="left: 100px; top: 220px;">[Date]</div>
+      <div class="draggable" id="qr" style="left: 100px; top: 280px;">[QR]</div>
+    </div>
+
+    <div id="controls">
+      <button onclick="savePositions()">💾 Save Positions</button>
+    </div>
+
+    <script>
+      const draggables = document.querySelectorAll('.draggable');
+      const container = document.getElementById('template-container');
+
+      draggables.forEach(el => {
+        el.onmousedown = function (e) {
+          e.preventDefault();
+
+          const shiftX = e.clientX - el.getBoundingClientRect().left;
+          const shiftY = e.clientY - el.getBoundingClientRect().top;
+
+          function moveAt(pageX, pageY) {
+            const containerRect = container.getBoundingClientRect();
+            let x = pageX - containerRect.left - shiftX;
+            let y = pageY - containerRect.top - shiftY;
+
+            x = Math.max(0, Math.min(container.offsetWidth - el.offsetWidth, x));
+            y = Math.max(0, Math.min(container.offsetHeight - el.offsetHeight, y));
+
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+          }
+
+          moveAt(e.pageX, e.pageY);
+
+          function onMouseMove(event) {
+            moveAt(event.pageX, event.pageY);
+          }
+
+          document.addEventListener('mousemove', onMouseMove);
+
+          el.onmouseup = function () {
+            document.removeEventListener('mousemove', onMouseMove);
+            el.onmouseup = null;
+          };
+        };
+
+        el.ondragstart = () => false;
+      });
+
+      function savePositions() {
+        const data = {};
+        draggables.forEach(el => {
+          data[el.id] = {
+            x: parseInt(el.style.left || 0),
+            y: parseInt(el.style.top || 0)
+          };
+        });
+
+        fetch('/save-positions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then(res => {
+          if (res.ok) alert("✅ Positions saved!");
+          else alert("❌ Failed to save positions.");
+        });
+      }
+    </script>
+  {% endif %}
+</body>
+</html>
